@@ -14,7 +14,6 @@ from model import Net
 
 
 def train(model: Net, epochs: int, learning_rate: float, momentum: float, trainloader: DataLoader):
-
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
@@ -36,23 +35,23 @@ def train(model: Net, epochs: int, learning_rate: float, momentum: float, trainl
 
             # print statistics
             running_loss += loss.item()
-            if i % 2000 == 1999:    # print every 2000 mini-batches
+            if i % 2000 == 1999:  # print every 2000 mini-batches
                 print('[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 2000))
                 running_loss = 0.0
 
     print('Finished Training')
-        
+
     return model
 
 
 def main(
-    image_folder: Path = typer.Option(...),
-    save_to_folder: Path = typer.Option(...),
-    epochs: int = 5,
-    learning_rate: float = 0.001,
-    momentum: float = 0.9,
-    batch_size: int = 64
+        image_folder: Path = typer.Option(...),
+        save_to_folder: Path = typer.Option(...),
+        epochs: int = 5,
+        learning_rate: float = 0.001,
+        momentum: float = 0.9,
+        batch_size: int = 64
 ):
     """[summary]
 
@@ -94,6 +93,7 @@ def main(
     torch.save(model.state_dict(), save_to.absolute().as_posix())
 
     return 0
+
 
 if __name__ == "__main__":
     typer.run(main)

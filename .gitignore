@@ -314,6 +314,7 @@ fabric.properties
 
 # Data files
 data
+saved
 
 # .idea
 .idea
