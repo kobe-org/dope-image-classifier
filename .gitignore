@@ -323,3 +323,4 @@ saved
 .vscode
 
 .DS_STORE
+/logs/
