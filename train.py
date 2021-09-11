@@ -9,8 +9,15 @@ import typer
 from fastai.vision.all import *
 from PIL import ImageFile
 from tqdm import tqdm
+from loguru import logger
 
 from model import Net
+
+logger.remove()
+logger.add(
+    os.path.join(os.path.dirname(__file__), 'logs', os.path.split(os.path.splitext(__file__)[0])[-1] + "-{time}.log"),
+    rotation='2MB', compression="zip", enqueue=True, colorize=False
+)
 
 
 def train(model: Net, epochs: int, learning_rate: float, momentum: float, trainloader: DataLoader):
