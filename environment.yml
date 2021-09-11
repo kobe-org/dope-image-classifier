@@ -1,0 +1,20 @@
+name: cifar10
+channels:
+  - pytorch
+  - fastchan
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.7,<3.10
+  - pip
+  - numpy
+  - pytorch
+  - torchvision
+  - fastai
+  - jupyterlab
+  - typer
+  - tqdm
+  - loguru
+  - pip:
+    - bentoml
