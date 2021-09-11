@@ -87,7 +87,7 @@ def main(
     classes = ('plane', 'car', 'bird', 'cat', 'deer',
                'dog', 'frog', 'horse', 'ship', 'truck')
     model = Net()
-    train(model, epochs, learning_rate, trainloader)
+    train(model, epochs, learning_rate, momentum, trainloader)
 
     save_to = save_to_folder / f'cifar10-{int(datetime.now().timestamp())}.pth'
     torch.save(model.state_dict(), save_to.absolute().as_posix())
