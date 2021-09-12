@@ -58,8 +58,9 @@ def main(
         epochs: int = 5,
         learning_rate: float = 0.001,
         momentum: float = 0.9,
-        batch_size: int = 64
-):
+        batch_size: int = 64,
+        input_name: str = 'image',
+        output_name: str = 'label'):
     """[summary]
 
     Args:
