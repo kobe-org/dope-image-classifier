@@ -16,5 +16,8 @@ dependencies:
   - typer
   - tqdm
   - loguru
+  - onnxruntime
+  - onnx
+  - opencv
   - pip:
     - bentoml
