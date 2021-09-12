@@ -69,6 +69,8 @@ def main(
         learning_rate (float, optional): [description]. Defaults to 0.001.
         momentum (float, optional): [description]. Defaults to 0.001.
         batch_size (int, optional): [description]. Defaults to 64.
+        input_name:
+        output_name:
 
     Returns:
         [type]: [description]
