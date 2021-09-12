@@ -12,6 +12,7 @@ from tqdm import tqdm
 from loguru import logger
 
 from model import Net
+from utils import convert_onnx
 
 logger.remove()
 logger.add(
@@ -89,15 +90,16 @@ def main(
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                               shuffle=True, num_workers=2)
 
-    testset = torchvision.datasets.CIFAR10(root=image_folder.as_posix(), train=False,
-                                           download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-                                             shuffle=False, num_workers=2)
+    dataiter = iter(trainloader)
+    image, _ = dataiter.next()
+    input_shape = (1, *tuple(image[0, :, :, :].shape))
 
     model = Net()
     train(model, epochs, learning_rate, momentum, trainloader)
 
-    save_to = save_to_folder / f'cifar10-{int(datetime.now().timestamp())}.pth'
+    save_to = save_to_folder / f'cifar10-{int(datetime.now().timestamp())}.onnx'
+    convert_onnx(model, save_to=save_to, input_shape=input_shape, input_name=input_name, output_name=output_name)
+
     torch.save(model.state_dict(), save_to.absolute().as_posix())
 
     return 0
