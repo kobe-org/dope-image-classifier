@@ -91,8 +91,6 @@ def main(
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                              shuffle=False, num_workers=2)
 
-    classes = ('plane', 'car', 'bird', 'cat', 'deer',
-               'dog', 'frog', 'horse', 'ship', 'truck')
     model = Net()
     train(model, epochs, learning_rate, momentum, trainloader)
 
