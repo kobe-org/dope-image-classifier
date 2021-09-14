@@ -12,6 +12,7 @@ from tqdm import tqdm
 from loguru import logger
 
 from model import Net
+from utils import convert_onnx
 
 logger.remove()
 logger.add(
@@ -58,8 +59,9 @@ def main(
         epochs: int = 5,
         learning_rate: float = 0.001,
         momentum: float = 0.9,
-        batch_size: int = 64
-):
+        batch_size: int = 64,
+        input_name: str = 'image',
+        output_name: str = 'label'):
     """[summary]
 
     Args:
@@ -69,6 +71,8 @@ def main(
         learning_rate (float, optional): [description]. Defaults to 0.001.
         momentum (float, optional): [description]. Defaults to 0.001.
         batch_size (int, optional): [description]. Defaults to 64.
+        input_name:
+        output_name:
 
     Returns:
         [type]: [description]
@@ -86,17 +90,16 @@ def main(
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                               shuffle=True, num_workers=2)
 
-    testset = torchvision.datasets.CIFAR10(root=image_folder.as_posix(), train=False,
-                                           download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-                                             shuffle=False, num_workers=2)
+    dataiter = iter(trainloader)
+    image, _ = dataiter.next()
+    input_shape = (1, *tuple(image[0, :, :, :].shape))
 
-    classes = ('plane', 'car', 'bird', 'cat', 'deer',
-               'dog', 'frog', 'horse', 'ship', 'truck')
     model = Net()
     train(model, epochs, learning_rate, momentum, trainloader)
 
-    save_to = save_to_folder / f'cifar10-{int(datetime.now().timestamp())}.pth'
+    save_to = save_to_folder / f'cifar10-{int(datetime.now().timestamp())}.onnx'
+    convert_onnx(model, save_to=save_to, input_shape=input_shape, input_name=input_name, output_name=output_name)
+
     torch.save(model.state_dict(), save_to.absolute().as_posix())
 
     return 0
