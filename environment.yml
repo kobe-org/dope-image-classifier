@@ -18,6 +18,7 @@ dependencies:
   - loguru
   - onnxruntime
   - onnx
+  - pytorch-lightning
   - opencv
   - pip:
     - bentoml
