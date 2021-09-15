@@ -27,7 +27,7 @@ class Net(nn.Module):
 
 
 class LitNet(pl.LightningModule):
-    def __init__(self, learning_rate: float=0.001, momentum: float=0.9):
+    def __init__(self, learning_rate: float, momentum: float):
         super().__init__()
         self.save_hyperparameters()
         self.conv1 = nn.Conv2d(3, 6, 5)
@@ -46,36 +46,33 @@ class LitNet(pl.LightningModule):
         x = self.fc3(x)
         return x
 
-    """This was in some tutorial code, not sure if we need"""
-    #TODO: Look at what this is for
-    def split_batch(self, batch):
-        return batch[0]["data"], batch[0]["label"].squeeze().long()
+    @staticmethod
+    def cross_entropy_loss(outputs, labels):
+        return F.cross_entropy(outputs, labels)
 
     def training_step(self, batch, batch_idx):
         # training_step defines the train loop. It is independent of forward
         inputs, labels = batch
-        # inputs, labels = self.split_batch(batch)
-        outputs = self(inputs)
-        loss = F.cross_entropy(outputs, labels)
+        outputs = self.forward(inputs)
+        loss = self.cross_entropy_loss(outputs, labels)
         self.log("train_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         inputs, labels = batch
-        # inputs, labels = self.split_batch(batch)
-        outputs = self(inputs)
-        loss = F.cross_entropy(outputs, labels)
+        outputs = self.forward(inputs)
+        loss = self.cross_entropy_loss(outputs, labels)
         self.log("valid loss", loss)
         return loss
 
     def test_step(self, batch, batch_idx):
         inputs, labels = batch
-        # inputs, labels = self.split_batch(batch)
-        outputs = self(inputs)
-        loss = F.cross_entropy(outputs, labels)
+        outputs = self.forward(inputs)
+        loss = self.cross_entropy_loss(outputs, labels)
         self.log("test loss", loss)
         return loss
 
     def configure_optimizers(self):
         # return optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
         return optim.SGD(self.parameters(), lr=self.hparams.learning_rate, momentum=self.hparams.momentum)
+

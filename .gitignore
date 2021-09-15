@@ -324,3 +324,5 @@ saved
 
 .DS_STORE
 /logs/
+
+/lightning_logs/
