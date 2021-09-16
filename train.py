@@ -107,6 +107,8 @@ def main(
     # trainer.fit(model, train_dataloader, val_dataloader)
     trainer.fit(model, cifar10)
     # train(model, epochs, learning_rate, momentum, trainloader)
+    #TODO: Perform evaluation
+    trainer.test(model, cifar10)
 
     input_sample = torch.randn(cifar10.dims)
     filepath = save_to_folder / f'cifar10-{int(datetime.now().timestamp())}.onnx'

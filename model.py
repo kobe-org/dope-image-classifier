@@ -69,6 +69,7 @@ class LitNet(pl.LightningModule):
         inputs, labels = batch
         outputs = self.forward(inputs)
         loss = self.cross_entropy_loss(outputs, labels)
+        # TODO: add other metrics
         self.log("test loss", loss)
         return loss
 
