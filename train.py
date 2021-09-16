@@ -12,8 +12,9 @@ from PIL import ImageFile
 from tqdm import tqdm
 from loguru import logger
 
-from model import LitNet, Net
+from model import LitNet
 from utils import convert_onnx
+from dataloaders import CIFAR10DataModule
 
 logger.remove()
 logger.add(
@@ -57,10 +58,12 @@ logger.add(
 def main(
         image_folder: Path = typer.Option(...),
         save_to_folder: Path = typer.Option(...),
-        epochs: int = 2,
-        learning_rate: float = 0.001,
+        epochs: int = 1,
+        learning_rate: float = 0.1,
         momentum: float = 0.9,
-        batch_size: int = 64,
+        batch_size: int = 256,
+        split_ratio: float = 0.9,
+        num_workers: int = 0,
         input_name: str = 'image',
         output_name: str = 'label'):
     """[summary]
@@ -82,30 +85,36 @@ def main(
     save_to_folder.mkdir(parents=True, exist_ok=True)
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    # transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    trainset = torchvision.datasets.CIFAR10(root=image_folder.as_posix(), train=True, download=True, transform=transform)
-    train_dataloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
-                                              shuffle=True, num_workers=2)
+    # trainset = torchvision.datasets.CIFAR10(root=image_folder.as_posix(), train=True, download=True, transform=transform)
+    # train_dataloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
+    #                                           shuffle=True, num_workers=2)
 
 
-    valset = torchvision.datasets.CIFAR10(root=image_folder.as_posix(), train=False, download=True, transform=transform)
-    val_dataloader = torch.utils.data.DataLoader(valset, batch_size=batch_size,
-                                            shuffle=False, num_workers=2)
+    # valset = torchvision.datasets.CIFAR10(root=image_folder.as_posix(), train=False, download=True, transform=transform)
+    # val_dataloader = torch.utils.data.DataLoader(valset, batch_size=batch_size,
+    #                                         shuffle=False, num_workers=2)
 
-    dataiter = iter(train_dataloader)
-    image, _ = dataiter.next()
-    input_shape = (1, *tuple(image[0, :, :, :].shape))
+    # dataiter = iter(train_dataloader)
+    # image, _ = dataiter.next()
+    # input_shape = (1, *tuple(image[0, :, :, :].shape))
 
     # model = Net()
     model = LitNet(learning_rate=learning_rate, momentum=momentum)
     trainer = Trainer(max_epochs=epochs)
-    trainer.fit(model, train_dataloader, val_dataloader)
+    cifar10 = CIFAR10DataModule(data_dir=image_folder, batch_size=batch_size, split_ratio=split_ratio, num_workers=num_workers)
+    # trainer.fit(model, train_dataloader, val_dataloader)
+    trainer.fit(model, cifar10)
     # train(model, epochs, learning_rate, momentum, trainloader)
 
-    save_to = save_to_folder / f'cifar10-{int(datetime.now().timestamp())}.pth'
+    input_sample = torch.randn(cifar10.dims)
+    filepath = save_to_folder / f'cifar10-{int(datetime.now().timestamp())}.onnx'
+    model.to_onnx(filepath, input_sample, export_params=True)
+
     # convert_onnx(model, save_to=save_to, input_shape=input_shape, input_name=input_name, output_name=output_name)
 
+    save_to = save_to_folder / f'cifar10-{int(datetime.now().timestamp())}.pth'
     torch.save(model.state_dict(), save_to.absolute().as_posix())
 
     return 0
