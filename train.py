@@ -1,4 +1,5 @@
 from pathlib import Path
+from fastai.learner import export
 
 import torch
 from torch.utils.data import DataLoader
@@ -59,7 +60,7 @@ def main(
         image_folder: Path = typer.Option(...),
         save_to_folder: Path = typer.Option(...),
         epochs: int = 1,
-        learning_rate: float = 0.1,
+        learning_rate: float = 0.001,
         momentum: float = 0.9,
         batch_size: int = 256,
         split_ratio: float = 0.9,
@@ -104,15 +105,15 @@ def main(
     model = LitNet(learning_rate=learning_rate, momentum=momentum)
     trainer = Trainer(max_epochs=epochs)
     cifar10 = CIFAR10DataModule(data_dir=image_folder, batch_size=batch_size, split_ratio=split_ratio, num_workers=num_workers)
-    # trainer.fit(model, train_dataloader, val_dataloader)
-    trainer.fit(model, cifar10)
-    # train(model, epochs, learning_rate, momentum, trainloader)
-    #TODO: Perform evaluation
-    trainer.test(model, cifar10)
 
-    input_sample = torch.randn(cifar10.dims)
+    trainer.fit(model, cifar10)
+
+    trainer.test(model, cifar10)
+    
+    # add a batch dimension for onnx conversion -> (num samples, channels, H, W)
+    input_sample = torch.randn(cifar10.dims).unsqueeze(0)
     filepath = save_to_folder / f'cifar10-{int(datetime.now().timestamp())}.onnx'
-    model.to_onnx(filepath, input_sample, export_params=True)
+    model.to_onnx(file_path=filepath, input_sample=input_sample, export_params=True)
 
     # convert_onnx(model, save_to=save_to, input_shape=input_shape, input_name=input_name, output_name=output_name)
 

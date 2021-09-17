@@ -37,7 +37,7 @@ class CIFAR10DataModule(pl.LightningDataModule):
         # Assign test dataset for use in dataloader(s)
         if stage == "test" or stage is None:
             self.cifar10_test = CIFAR10(self.data_dir, train=False, transform=self.transform)
-            self.dims = tuple(self.mnist_test[0][0].shape)            
+            self.dims = tuple(self.cifar10_test[0][0].shape)
 
     def train_dataloader(self):
         return DataLoader(self.cifar10_train, batch_size=self.batch_size, num_workers=self.num_workers)
