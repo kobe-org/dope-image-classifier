@@ -6,6 +6,8 @@ import torch
 import typer
 from loguru import logger
 from pytorch_lightning import Trainer
+from pytorch_lightning.loggers import WandbLogger
+
 
 from dataloaders import CIFAR10DataModule
 from model import LitNet
@@ -42,7 +44,7 @@ def main(
     save_to_folder.mkdir(parents=True, exist_ok=True)
 
     model = LitNet(learning_rate=learning_rate, momentum=momentum)
-    trainer = Trainer(max_epochs=epochs)
+    trainer = Trainer(max_epochs=epochs, logger=WandbLogger(project="dope image classifier", entity="bloodclot-inc"))
     cifar10 = CIFAR10DataModule(data_dir=image_folder, batch_size=batch_size, split_ratio=split_ratio, num_workers=num_workers)
 
     trainer.fit(model, cifar10)

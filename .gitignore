@@ -326,3 +326,5 @@ saved
 /logs/
 
 /lightning_logs/
+/dope image classifier
+/wandb
