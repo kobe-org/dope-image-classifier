@@ -20,7 +20,6 @@ def test(model_checkpoint: Path = typer.Option(...), image_path: Path = typer.Op
     classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
     prediction = predict(session, image_path=image_path, size=(height, width), labels=classes)
-
     return 0
 
 
@@ -48,7 +47,7 @@ def preprocess(image: Image, size: Tuple[int, int]):
 
 
 def predict(session: rt.InferenceSession, image_path: Path, size: Tuple[int, int], labels: Iterable[str]):
-    image = get_image(image_path, show=True)
+    image = get_image(image_path, show=False)
     image = preprocess(image, size=size)
     ort_inputs = {session.get_inputs()[0].name: image}
     preds = session.run(None, ort_inputs)[0]
