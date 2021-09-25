@@ -22,5 +22,8 @@ dependencies:
   - pytorch-lightning
   - opencv
   - wandb
+  - scikit-image
   - pip:
     - bentoml
+    - redisai
+    - ml2rt
