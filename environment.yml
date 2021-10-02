@@ -1,18 +1,16 @@
-name: cifar10-python37
+name: cifar10
 channels:
   - pytorch
-  - fastchan
   - anaconda
   - conda-forge
   - defaults
 dependencies:
-  - python>=3.7,<3.8
+  - python>=3.8,<3.10
   - pip
   - numpy
   - pytorch
   - torchvision
   - torchmetrics
-  - fastai
   - jupyterlab
   - typer
   - tqdm
@@ -23,10 +21,8 @@ dependencies:
   - opencv
   - wandb
   - scikit-image
-  - werkzeug>=0.15,<2.0
   - streamlit
   - pip:
     - bentoml
     - redisai
     - ml2rt
-    - gradio
