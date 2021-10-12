@@ -46,7 +46,7 @@ def main(
     model = LitNet(learning_rate=learning_rate, momentum=momentum)
     trainer = Trainer(max_epochs=epochs, logger=WandbLogger(project="dope image classifier", entity="bloodclot-inc"))
     cifar10 = CIFAR10DataModule(data_dir=image_folder, batch_size=batch_size, split_ratio=split_ratio, num_workers=num_workers)
-
+    # cifar10.setup(stage='fit')
     trainer.fit(model, cifar10)
 
     trainer.test(model, cifar10)
