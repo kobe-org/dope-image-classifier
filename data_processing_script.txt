@@ -9,6 +9,7 @@ def pre_process_3ch(image):
     return temp.sub(mean).div(std).unsqueeze(0)
 
 
-def get_score(output):
-    print(output.max(1))
-    return output.max(1)[0]
+def get_scores(output):
+    scores = output[0]
+    return scores
+
