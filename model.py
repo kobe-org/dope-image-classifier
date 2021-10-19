@@ -24,19 +24,25 @@ class LitNet(pl.LightningModule):
         self.fc3 = nn.Linear(84, 10)
 
         # metrics
-        self.train_acc = torchmetrics.Accuracy()
-        self.train_precision = torchmetrics.Precision()
-        self.train_recall = torchmetrics.Recall()
-        self.train_f1 = torchmetrics.F1()
+    
+        self.accuracy = torchmetrics.Accuracy(num_classes=10)
+        self.precision = torchmetrics.Precision(num_classes=10)
+        self.recall = torchmetrics.Recall(num_classes=10)
+        self.f1 = torchmetrics.F1(num_classes=10)
 
-        self.valid_acc = torchmetrics.Accuracy()
-        self.valid_precision = torchmetrics.Precision()
-        self.valid_recall = torchmetrics.Recall()
-        self.valid_f1 = torchmetrics.F1()
+        self.train_acc = torchmetrics.Accuracy(num_classes=10)
+        self.train_precision = torchmetrics.Precision(num_classes=10)
+        self.train_recall = torchmetrics.Recall(num_classes=10)
+        self.train_f1 = torchmetrics.F1(num_classes=10)
+
+        self.valid_acc = torchmetrics.Accuracy(num_classes=10)
+        self.valid_precision = torchmetrics.Precision(num_classes=10)
+        self.valid_recall = torchmetrics.Recall(num_classes=10)
+        self.valid_f1 = torchmetrics.F1(num_classes=10)
 
         self.test_acc = torchmetrics.Accuracy()
-        self.test_precision = torchmetrics.Precision()
-        self.test_recall = torchmetrics.Recall()
+        self.test_precision = torchmetrics.Precision(num_classes=10)
+        self.test_recall = torchmetrics.Recall(num_classes=10)
         self.test_f1 = torchmetrics.F1(num_classes=10)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -58,59 +64,77 @@ class LitNet(pl.LightningModule):
         outputs = self.forward(inputs)
 
         loss = self.cross_entropy_loss(outputs, labels)
-        acc = self.train_acc(outputs, labels)
-        precision = self.train_precision(outputs, labels)
-        recall = self.train_recall(outputs, labels)
-        f1_score = self.train_f1(outputs, labels)
+        # self.cross_entropy_loss(outputs, labels)
+        self.log("train loss", loss, on_step=True, on_epoch=True)
 
-        self.log("train loss", loss)
         self.log("train performance", {
-            "train_acc": acc,
-            "train_precision": precision,
-            "train_recall": recall,
-            "train_f1": f1_score
-        })
+            "train_acc": self.accuracy(outputs, labels),
+            "train_precision": self.precision(outputs, labels),
+            "train_recall": self.recall(outputs, labels),
+            "train_f1": self.f1(outputs, labels)
+        }, on_step=True, on_epoch=True)
         return loss
+
+    
+    def training_epoch_end(self, outs):
+        # log epoch metric
+        self.log('train_acc_epoch', self.accuracy.compute())
+        self.log('train_precision_epoch', self.precision.compute())
+        self.log('train_recall_epoch', self.recall.compute())
+        self.log('train_f1_epoch', self.f1.compute())
 
     def validation_step(self, batch, batch_idx):
         inputs, labels = batch
         outputs = self.forward(inputs)
         
         loss = self.cross_entropy_loss(outputs, labels)
-        acc = self.valid_acc(outputs, labels)
-        precision = self.valid_precision(outputs, labels)
-        recall = self.valid_recall(outputs, labels)
-        f1_score = self.valid_f1(outputs, labels)
+        
+        self.valid_acc(outputs, labels)
+        self.valid_precision(outputs, labels)
+        self.valid_recall(outputs, labels)
+        self.valid_f1(outputs, labels)
 
-        self.log("valid loss", loss)
+        self.log("valid loss", loss, on_step=True, on_epoch=True)
         self.log("valid performance", {
-            "valid_acc": acc,
-            "valid_precision": precision,
-            "valid_recall": recall,
-            "valid_f1": f1_score
-        })
+            "valid_acc": self.valid_acc,
+            "valid_precision": self.valid_precision,
+            "valid_recall": self.valid_recall,
+            "valid_f1": self.valid_f1
+        }, on_step=True, on_epoch=True)
         
         return loss
+
+
+    def validation_epoch_end(self, outs):
+        # log epoch metric
+        self.log('train_acc_epoch', self.accuracy.compute())
+        self.log('train_precision_epoch', self.precision.compute())
+        self.log('train_recall_epoch', self.recall.compute())
+        self.log('train_f1_epoch', self.f1.compute())
 
     def test_step(self, batch, batch_idx):
         inputs, labels = batch
         outputs = self.forward(inputs)
 
         loss = self.cross_entropy_loss(outputs, labels)
-        acc = self.test_acc(outputs, labels)
-        precision = self.test_precision(outputs, labels)
-        recall = self.test_recall(outputs, labels)
-        f1_score = self.test_f1(outputs, labels)
         
-        self.log("test loss", loss)
+        self.test_acc(outputs, labels)
+        self.test_precision(outputs, labels)
+        self.test_recall(outputs, labels)
+        self.test_f1(outputs, labels)
+        
+        self.log("test loss", loss, on_step=True, on_epoch=True)
         self.log("test performance", {
-            "test_acc": acc,
-            "test_precision": precision,
-            "test_recall": recall,
-            "test_f1": f1_score
-        })
+            "test_acc": self.test_acc,
+            "test_precision": self.test_precision,
+            "test_recall": self.test_recall,
+            "test_f1": self.test_f1
+        }, on_step=True, on_epoch=True)
 
         return loss
+
+    def test_epoch_end(self, outputs):
+        return super().test_epoch_end(outputs)
 
     def configure_optimizers(self):
         # return optim.Adam(self.parameters(), lr=self.hparams.learning_rate)

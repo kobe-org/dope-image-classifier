@@ -2,6 +2,8 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+from typing import Optional
+
 import torch
 import typer
 from loguru import logger
@@ -21,6 +23,7 @@ logger.add(
 def main(
         image_folder: Path = typer.Option(...),
         save_to_folder: Path = typer.Option(...),
+        gpus: Optional[int] = None,
         epochs: int = 1,
         learning_rate: float = 0.001,
         momentum: float = 0.9,
@@ -44,7 +47,7 @@ def main(
     save_to_folder.mkdir(parents=True, exist_ok=True)
 
     model = LitNet(learning_rate=learning_rate, momentum=momentum)
-    trainer = Trainer(max_epochs=epochs, logger=WandbLogger(project="dope image classifier", entity="bloodclot-inc"))
+    trainer = Trainer(max_epochs=epochs, gpus=gpus, logger=WandbLogger(project="dope image classifier", entity="bloodclot-inc"))
     cifar10 = CIFAR10DataModule(data_dir=image_folder, batch_size=batch_size, split_ratio=split_ratio, num_workers=num_workers)
     # cifar10.setup(stage='fit')
     trainer.fit(model, cifar10)
