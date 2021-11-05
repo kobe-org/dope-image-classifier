@@ -27,7 +27,7 @@ def main(
         epochs: int = 1,
         learning_rate: float = 0.001,
         momentum: float = 0.9,
-        batch_size: int = 256,
+        batch_size: int = 2,
         split_ratio: float = 0.9,
         num_workers: int = 0):
     """[summary]
