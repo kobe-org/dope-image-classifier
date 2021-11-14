@@ -13,7 +13,7 @@ from torchmetrics import Accuracy, MetricCollection, Precision, Recall, F1
 
 
 class LiNet(pl.LightningModule):
-    def __init__(self, learning_rate: float, momentum: float):
+    def __init__(self, learning_rate: float, momentum: float, dropout_rate: float):
         super().__init__()
         # This saves all constructor arguments as items in the hparams dictionary
         self.save_hyperparameters()
@@ -21,6 +21,7 @@ class LiNet(pl.LightningModule):
         # model architecture
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
+        self.dropout = nn.Dropout(dropout_rate, inplace=False)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
@@ -48,8 +49,8 @@ class LiNet(pl.LightningModule):
         self.test_metrics = metrics.clone(prefix='test_')
 
     def forward(self, x: Tensor) -> Tensor:
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
+        x = self.dropout(self.pool(F.relu(self.conv1(x))))
+        x = self.dropout(self.pool(F.relu(self.conv2(x))))
         x = torch.flatten(x, 1)  # flatten all dimensions except batch
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -73,19 +74,19 @@ class LiNet(pl.LightningModule):
         # metrics are logged with keys: train_Accuracy, train_Precision and train_Recall
         self.log_dict(output)
 
-        acc = accuracy_score(preds, labels)
+        # acc = accuracy_score(preds, labels)
         # logger.info(f'Precision: {self.precision}')       
-        precision_ = precision_score(preds, labels, average=self.average)
-        recall_ = recall_score(preds, labels, average=self.average)
-        f1_score_ = f1_score(preds, labels, average=self.average)
+        # precision_ = precision_score(preds, labels, average=self.average)
+        # recall_ = recall_score(preds, labels, average=self.average)
+        # f1_score_ = f1_score(preds, labels, average=self.average)
 
         # # print(f'Outputs:\n{outputs}\nLoss:\n{loss}\nY_hat:\n{preds}\nLabels:{labels}\nacc:{acc}')
 
-        # self.log("train loss", loss, on_step=True, on_epoch=True)
-        self.log("train acc sklearn", acc, on_step=True, on_epoch=True)
-        self.log("train precision sklearn", precision_, on_step=True, on_epoch=True)
-        self.log("train recall sklearn", recall_, on_step=True, on_epoch=True)
-        self.log("train f1_score sklearn", f1_score_, on_step=True, on_epoch=True)
+        self.log("train loss", loss, on_step=True, on_epoch=True)
+        # self.log("train acc sklearn", acc, on_step=True, on_epoch=True)
+        # self.log("train precision sklearn", precision_, on_step=True, on_epoch=True)
+        # self.log("train recall sklearn", recall_, on_step=True, on_epoch=True)
+        # self.log("train f1_score sklearn", f1_score_, on_step=True, on_epoch=True)
 
         return loss
 
@@ -100,17 +101,17 @@ class LiNet(pl.LightningModule):
         # metrics are logged with keys: val_Accuracy, val_Precision and val_Recall
         self.log_dict(output)
 
-        acc = accuracy_score(preds, labels)
+        # acc = accuracy_score(preds, labels)
         # logger.info(f'Precision: {self.precision}')
-        precision_ = precision_score(preds, labels, average=self.average)
-        recall_ = recall_score(preds, labels, average=self.average)
-        f1_score_ = f1_score(preds, labels, average=self.average)
+        # precision_ = precision_score(preds, labels, average=self.average)
+        # recall_ = recall_score(preds, labels, average=self.average)
+        # f1_score_ = f1_score(preds, labels, average=self.average)
 
-        # self.log("valid loss", loss, on_step=True, on_epoch=True)
-        self.log("valid acc sklearn", acc, on_step=True, on_epoch=True)
-        self.log("valid precision sklearn", precision_, on_step=True, on_epoch=True)
-        self.log("valid recall sklearn", recall_, on_step=True, on_epoch=True)
-        self.log("valid f1_score sklearn", f1_score_, on_step=True, on_epoch=True)
+        self.log("valid loss", loss, on_step=True, on_epoch=True)
+        # self.log("valid acc sklearn", acc, on_step=True, on_epoch=True)
+        # self.log("valid precision sklearn", precision_, on_step=True, on_epoch=True)
+        # self.log("valid recall sklearn", recall_, on_step=True, on_epoch=True)
+        # self.log("valid f1_score sklearn", f1_score_, on_step=True, on_epoch=True)
 
         return loss
 
@@ -125,16 +126,16 @@ class LiNet(pl.LightningModule):
         # metrics are logged with keys: train_Accuracy, train_Precision and train_Recall
         self.log_dict(output)
 
-        acc = accuracy_score(preds, labels)
+        # acc = accuracy_score(preds, labels)
         # logger.info(f'Precision: {self.precision}')
-        precision_ = precision_score(preds, labels, average=self.average)
-        recall_ = recall_score(preds, labels, average=self.average)
-        f1_score_ = f1_score(preds, labels, average=self.average)
-        # self.log("test loss", loss, on_step=True, on_epoch=True)
-        self.log("test acc sklearn", acc, on_step=True, on_epoch=True)
-        self.log("test precision sklearn", precision_, on_step=True, on_epoch=True)
-        self.log("test recall sklearn", recall_, on_step=True, on_epoch=True)
-        self.log("test f1_score sklearn", f1_score_, on_step=True, on_epoch=True)
+        # precision_ = precision_score(preds, labels, average=self.average)
+        # recall_ = recall_score(preds, labels, average=self.average)
+        # f1_score_ = f1_score(preds, labels, average=self.average)
+        self.log("test loss", loss, on_step=True, on_epoch=True)
+        # self.log("test acc sklearn", acc, on_step=True, on_epoch=True)
+        # self.log("test precision sklearn", precision_, on_step=True, on_epoch=True)
+        # self.log("test recall sklearn", recall_, on_step=True, on_epoch=True)
+        # self.log("test f1_score sklearn", f1_score_, on_step=True, on_epoch=True)
 
         return loss
 
