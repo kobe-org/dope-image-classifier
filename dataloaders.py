@@ -29,10 +29,10 @@ class CIFAR10DataModule(pl.LightningDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit" or stage is None:
             cifar10_full = CIFAR10(self.data_dir, train=True, transform=self.transform)
-            # train_size = int(cifar10_full.data.shape[0] * self.split_ratio)
-            train_size = 5
-            # val_size = cifar10_full.data.shape[0] - train_size
-            val_size = 5
+            train_size = int(cifar10_full.data.shape[0] * self.split_ratio)
+            train_size = 512
+            val_size = cifar10_full.data.shape[0] - train_size
+            val_size = 128
             self.cifar10_train, self.cifar10_val, _ = random_split(cifar10_full, [train_size, val_size, cifar10_full.data.shape[0] - train_size - val_size])
             self.dims = tuple(self.cifar10_train[0][0].shape)
 
