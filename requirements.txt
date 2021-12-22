@@ -14,7 +14,6 @@ opencv
 wandb
 scikit-image
 streamlit
-bentoml
 redisai
 ml2rt
 argparse
