@@ -44,9 +44,9 @@ class LiNet(pl.LightningModule):
                 Recall(num_classes=10, multiclass=True, average=self.average),
                 F1(num_classes=10, multiclass=True, average=self.average)
             ])
-        self.train_metrics = metrics.clone(prefix='train_')
-        self.valid_metrics = metrics.clone(prefix='val_')
-        self.test_metrics = metrics.clone(prefix='test_')
+        self.train_metrics = metrics.clone(prefix='train/')
+        self.valid_metrics = metrics.clone(prefix='valid/')
+        self.test_metrics = metrics.clone(prefix='test/')
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.dropout(self.pool(F.relu(self.conv1(x))))
@@ -62,10 +62,8 @@ class LiNet(pl.LightningModule):
         return F.cross_entropy(outputs, labels)
 
     def training_step(self, batch, batch_idx):
-        # training_step defines the train loop. It is independent of forward
         inputs, labels = batch
         outputs = self.forward(inputs)
-
         loss = self.cross_entropy_loss(outputs, labels)
 
         preds = torch.argmax(outputs, dim=1)
@@ -73,20 +71,7 @@ class LiNet(pl.LightningModule):
         # use log_dict instead of log
         # metrics are logged with keys: train_Accuracy, train_Precision and train_Recall
         self.log_dict(output)
-
-        # acc = accuracy_score(preds, labels)
-        # logger.info(f'Precision: {self.precision}')       
-        # precision_ = precision_score(preds, labels, average=self.average)
-        # recall_ = recall_score(preds, labels, average=self.average)
-        # f1_score_ = f1_score(preds, labels, average=self.average)
-
-        # # print(f'Outputs:\n{outputs}\nLoss:\n{loss}\nY_hat:\n{preds}\nLabels:{labels}\nacc:{acc}')
-
-        self.log("train loss", loss, on_step=True, on_epoch=True)
-        # self.log("train acc sklearn", acc, on_step=True, on_epoch=True)
-        # self.log("train precision sklearn", precision_, on_step=True, on_epoch=True)
-        # self.log("train recall sklearn", recall_, on_step=True, on_epoch=True)
-        # self.log("train f1_score sklearn", f1_score_, on_step=True, on_epoch=True)
+        self.log("train/loss", loss)
 
         return loss
 
@@ -101,17 +86,7 @@ class LiNet(pl.LightningModule):
         # metrics are logged with keys: val_Accuracy, val_Precision and val_Recall
         self.log_dict(output)
 
-        # acc = accuracy_score(preds, labels)
-        # logger.info(f'Precision: {self.precision}')
-        # precision_ = precision_score(preds, labels, average=self.average)
-        # recall_ = recall_score(preds, labels, average=self.average)
-        # f1_score_ = f1_score(preds, labels, average=self.average)
-
-        self.log("valid loss", loss, on_step=True, on_epoch=True)
-        # self.log("valid acc sklearn", acc, on_step=True, on_epoch=True)
-        # self.log("valid precision sklearn", precision_, on_step=True, on_epoch=True)
-        # self.log("valid recall sklearn", recall_, on_step=True, on_epoch=True)
-        # self.log("valid f1_score sklearn", f1_score_, on_step=True, on_epoch=True)
+        self.log("valid/loss", loss)
 
         return loss
 
@@ -125,17 +100,7 @@ class LiNet(pl.LightningModule):
         # use log_dict instead of log
         # metrics are logged with keys: train_Accuracy, train_Precision and train_Recall
         self.log_dict(output)
-
-        # acc = accuracy_score(preds, labels)
-        # logger.info(f'Precision: {self.precision}')
-        # precision_ = precision_score(preds, labels, average=self.average)
-        # recall_ = recall_score(preds, labels, average=self.average)
-        # f1_score_ = f1_score(preds, labels, average=self.average)
-        self.log("test loss", loss, on_step=True, on_epoch=True)
-        # self.log("test acc sklearn", acc, on_step=True, on_epoch=True)
-        # self.log("test precision sklearn", precision_, on_step=True, on_epoch=True)
-        # self.log("test recall sklearn", recall_, on_step=True, on_epoch=True)
-        # self.log("test f1_score sklearn", f1_score_, on_step=True, on_epoch=True)
+        self.log("test/loss", loss)
 
         return loss
 

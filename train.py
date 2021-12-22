@@ -48,7 +48,10 @@ def main(
     save_to_folder.mkdir(parents=True, exist_ok=True)
 
     model = LiNet(learning_rate=learning_rate, momentum=momentum, dropout_rate=dropout_rate)
-    trainer = Trainer(max_epochs=epochs, gpus=gpus, logger=WandbLogger(project="dope image classifier", entity="bloodclot-inc"))
+    trainer = Trainer(max_epochs=epochs,
+                      gpus=gpus,
+                      logger=WandbLogger(project="dope image classifier", entity="bloodclot-inc"),
+                      log_every_n_steps=1)
     cifar10 = CIFAR10DataModule(data_dir=image_folder, batch_size=batch_size, split_ratio=split_ratio, num_workers=num_workers)
     # cifar10.setup(stage='fit')
     trainer.fit(model, cifar10)
