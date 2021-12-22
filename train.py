@@ -1,12 +1,12 @@
+import argparse
 import os
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
-from typing import Optional, Literal
+from typing import Optional
 
 import torch
-import typer
 from loguru import logger
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger
@@ -26,8 +26,8 @@ class AutoscalingTechnique(str, Enum):
     binsearch = 'binsearch'
 
 def main(
-        image_folder: Path = typer.Option(...),
-        save_to_folder: Path = typer.Option(...),
+        image_folder: Path,
+        save_to_folder: Path,
         gpus: Optional[int] = None,
         epochs: int = 1,
         learning_rate: float = 0.001,
@@ -59,13 +59,13 @@ def main(
                       logger=WandbLogger(project="dope image classifier", entity="bloodclot-inc"),
                       log_every_n_steps=1,
                       auto_scale_batch_size=autoscale_batch_size)
-    print(f"BATCH SIZE: {model.hparams.batch_size}")
-    cifar10 = CIFAR10DataModule(data_dir=image_folder, batch_size=batch_size, split_ratio=split_ratio, num_workers=num_workers)
-    trainer.tune(model, cifar10)
-    print(f"BATCH SIZE: {model.hparams.batch_size}")
-    # cifar10.setup(stage='fit')
-    trainer.fit(model, cifar10)
 
+    cifar10 = CIFAR10DataModule(data_dir=image_folder.as_posix(),
+                                batch_size=batch_size,
+                                split_ratio=split_ratio,
+                                num_workers=num_workers)
+    trainer.tune(model, cifar10)
+    trainer.fit(model, cifar10)
     trainer.test(model, cifar10)
     
     # add a batch dimension for onnx conversion -> (num samples, channels, H, W)
@@ -77,4 +77,17 @@ def main(
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    parser = argparse.ArgumentParser(description='This app showcases a dope CIFAR10 classifier')
+    parser.add_argument('--image-folder', type=Path)
+    parser.add_argument('--save-to-folder', type=Path)
+    parser.add_argument('--gpus', type=Optional[int], default=None)
+    parser.add_argument('--epochs', type=int, default=1)
+    parser.add_argument('--learning-rate', type=float, default=0.001)
+    parser.add_argument('--momentum', type=float, default=0.9)
+    parser.add_argument('--batch-size', type=int, default=2)
+    parser.add_argument('--autoscale_batch_size', type=Optional[AutoscalingTechnique], default=None)
+    parser.add_argument('--split_ratio', type=float, default=0.9)
+    parser.add_argument('--dropout_rate', type=float, default=0.2)
+    parser.add_argument('--num_workers', type=int, default=0)
+    args = parser.parse_args()
+    main(**dict(args._get_kwargs()))
