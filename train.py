@@ -12,7 +12,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 
 from dataloaders import CIFAR10DataModule
-from model import LitNet
+from model import LiNet
 
 logger.remove()
 logger.add(
@@ -27,8 +27,9 @@ def main(
         epochs: int = 1,
         learning_rate: float = 0.001,
         momentum: float = 0.9,
-        batch_size: int = 256,
+        batch_size: int = 2,
         split_ratio: float = 0.9,
+        dropout_rate: float = 0.2,
         num_workers: int = 0):
     """[summary]
 
@@ -46,8 +47,11 @@ def main(
     image_folder.mkdir(parents=True, exist_ok=True)
     save_to_folder.mkdir(parents=True, exist_ok=True)
 
-    model = LitNet(learning_rate=learning_rate, momentum=momentum)
-    trainer = Trainer(max_epochs=epochs, gpus=gpus, logger=WandbLogger(project="dope image classifier", entity="bloodclot-inc"))
+    model = LiNet(learning_rate=learning_rate, momentum=momentum, dropout_rate=dropout_rate)
+    trainer = Trainer(max_epochs=epochs,
+                      gpus=gpus,
+                      logger=WandbLogger(project="dope image classifier", entity="bloodclot-inc"),
+                      log_every_n_steps=1)
     cifar10 = CIFAR10DataModule(data_dir=image_folder, batch_size=batch_size, split_ratio=split_ratio, num_workers=num_workers)
     # cifar10.setup(stage='fit')
     trainer.fit(model, cifar10)

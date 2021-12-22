@@ -2,52 +2,55 @@ import torch.optim as optim
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from torch import Tensor
 import pytorch_lightning as pl
 import torchmetrics
-from torchmetrics.classification import accuracy
 from torchmetrics.classification.f_beta import F1
 
+from loguru import logger
+from torchmetrics import Accuracy, MetricCollection, Precision, Recall, F1
 
-class LitNet(pl.LightningModule):
-    def __init__(self, learning_rate: float, momentum: float):
+
+class LiNet(pl.LightningModule):
+    def __init__(self, learning_rate: float, momentum: float, dropout_rate: float):
         super().__init__()
         # This saves all constructor arguments as items in the hparams dictionary
         self.save_hyperparameters()
-        
+
         # model architecture
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
+        self.dropout = nn.Dropout(dropout_rate, inplace=False)
         self.conv2 = nn.Conv2d(6, 16, 5)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
 
         # metrics
-    
-        self.accuracy = torchmetrics.Accuracy(num_classes=10)
-        self.precision = torchmetrics.Precision(num_classes=10)
-        self.recall = torchmetrics.Recall(num_classes=10)
-        self.f1 = torchmetrics.F1(num_classes=10)
 
-        self.train_acc = torchmetrics.Accuracy(num_classes=10)
-        self.train_precision = torchmetrics.Precision(num_classes=10)
-        self.train_recall = torchmetrics.Recall(num_classes=10)
-        self.train_f1 = torchmetrics.F1(num_classes=10)
+        # self.accuracy = torchmetrics.Accuracy(num_classes=10)
+        # self.precision_ = torchmetrics.Precision(average='micro', num_classes=10)
+        # self.recall_ = torchmetrics.Recall(average='micro', num_classes=10)
+        # self.f1_ = torchmetrics.F1(average='micro', num_classes=10, multiclass=True)
 
-        self.valid_acc = torchmetrics.Accuracy(num_classes=10)
-        self.valid_precision = torchmetrics.Precision(num_classes=10)
-        self.valid_recall = torchmetrics.Recall(num_classes=10)
-        self.valid_f1 = torchmetrics.F1(num_classes=10)
+        # https://githubmemory.com/repo/PyTorchLightning/metrics/issues/298
+        self.average = 'weighted'
 
-        self.test_acc = torchmetrics.Accuracy()
-        self.test_precision = torchmetrics.Precision(num_classes=10)
-        self.test_recall = torchmetrics.Recall(num_classes=10)
-        self.test_f1 = torchmetrics.F1(num_classes=10)
+        metrics = MetricCollection(
+            [
+                Accuracy(),
+                Precision(num_classes=10, multiclass=True, average=self.average),
+                Recall(num_classes=10, multiclass=True, average=self.average),
+                F1(num_classes=10, multiclass=True, average=self.average)
+            ])
+        self.train_metrics = metrics.clone(prefix='train/')
+        self.valid_metrics = metrics.clone(prefix='valid/')
+        self.test_metrics = metrics.clone(prefix='test/')
 
     def forward(self, x: Tensor) -> Tensor:
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
+        x = self.dropout(self.pool(F.relu(self.conv1(x))))
+        x = self.dropout(self.pool(F.relu(self.conv2(x))))
         x = torch.flatten(x, 1)  # flatten all dimensions except batch
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -59,84 +62,47 @@ class LitNet(pl.LightningModule):
         return F.cross_entropy(outputs, labels)
 
     def training_step(self, batch, batch_idx):
-        # training_step defines the train loop. It is independent of forward
         inputs, labels = batch
         outputs = self.forward(inputs)
-
         loss = self.cross_entropy_loss(outputs, labels)
-        # self.cross_entropy_loss(outputs, labels)
-        self.log("train loss", loss, on_step=True, on_epoch=True)
 
-        self.log("train performance", {
-            "train_acc": self.accuracy(outputs, labels),
-            "train_precision": self.precision(outputs, labels),
-            "train_recall": self.recall(outputs, labels),
-            "train_f1": self.f1(outputs, labels)
-        }, on_step=True, on_epoch=True)
+        preds = torch.argmax(outputs, dim=1)
+        output = self.train_metrics(preds, labels)
+        # use log_dict instead of log
+        # metrics are logged with keys: train_Accuracy, train_Precision and train_Recall
+        self.log_dict(output)
+        self.log("train/loss", loss)
+
         return loss
-
-    
-    def training_epoch_end(self, outs):
-        # log epoch metric
-        self.log('train_acc_epoch', self.accuracy.compute())
-        self.log('train_precision_epoch', self.precision.compute())
-        self.log('train_recall_epoch', self.recall.compute())
-        self.log('train_f1_epoch', self.f1.compute())
 
     def validation_step(self, batch, batch_idx):
         inputs, labels = batch
         outputs = self.forward(inputs)
-        
         loss = self.cross_entropy_loss(outputs, labels)
-        
-        self.valid_acc(outputs, labels)
-        self.valid_precision(outputs, labels)
-        self.valid_recall(outputs, labels)
-        self.valid_f1(outputs, labels)
 
-        self.log("valid loss", loss, on_step=True, on_epoch=True)
-        self.log("valid performance", {
-            "valid_acc": self.valid_acc,
-            "valid_precision": self.valid_precision,
-            "valid_recall": self.valid_recall,
-            "valid_f1": self.valid_f1
-        }, on_step=True, on_epoch=True)
-        
+        preds = torch.argmax(outputs, dim=1)
+        output = self.valid_metrics(preds, labels)
+        # use log_dict instead of log
+        # metrics are logged with keys: val_Accuracy, val_Precision and val_Recall
+        self.log_dict(output)
+
+        self.log("valid/loss", loss)
+
         return loss
-
-
-    def validation_epoch_end(self, outs):
-        # log epoch metric
-        self.log('train_acc_epoch', self.accuracy.compute())
-        self.log('train_precision_epoch', self.precision.compute())
-        self.log('train_recall_epoch', self.recall.compute())
-        self.log('train_f1_epoch', self.f1.compute())
 
     def test_step(self, batch, batch_idx):
         inputs, labels = batch
         outputs = self.forward(inputs)
-
         loss = self.cross_entropy_loss(outputs, labels)
-        
-        self.test_acc(outputs, labels)
-        self.test_precision(outputs, labels)
-        self.test_recall(outputs, labels)
-        self.test_f1(outputs, labels)
-        
-        self.log("test loss", loss, on_step=True, on_epoch=True)
-        self.log("test performance", {
-            "test_acc": self.test_acc,
-            "test_precision": self.test_precision,
-            "test_recall": self.test_recall,
-            "test_f1": self.test_f1
-        }, on_step=True, on_epoch=True)
+
+        preds = torch.argmax(outputs, dim=1)
+        output = self.test_metrics(preds, labels)
+        # use log_dict instead of log
+        # metrics are logged with keys: train_Accuracy, train_Precision and train_Recall
+        self.log_dict(output)
+        self.log("test/loss", loss)
 
         return loss
 
-    def test_epoch_end(self, outputs):
-        return super().test_epoch_end(outputs)
-
     def configure_optimizers(self):
-        # return optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
-        return optim.SGD(self.parameters(), lr=self.hparams.learning_rate, momentum=self.hparams.momentum)
-
+        return optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
