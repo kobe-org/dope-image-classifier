@@ -1,8 +1,9 @@
 import os
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 
-from typing import Optional
+from typing import Optional, Literal
 
 import torch
 import typer
@@ -20,6 +21,10 @@ logger.add(
     rotation='2MB', compression="zip", enqueue=True, colorize=False
 )
 
+class AutoscalingTechnique(str, Enum):
+    power = 'power'
+    binsearch = 'binsearch'
+
 def main(
         image_folder: Path = typer.Option(...),
         save_to_folder: Path = typer.Option(...),
@@ -28,6 +33,7 @@ def main(
         learning_rate: float = 0.001,
         momentum: float = 0.9,
         batch_size: int = 2,
+        autoscale_batch_size: Optional[AutoscalingTechnique] = None,
         split_ratio: float = 0.9,
         dropout_rate: float = 0.2,
         num_workers: int = 0):
@@ -47,12 +53,16 @@ def main(
     image_folder.mkdir(parents=True, exist_ok=True)
     save_to_folder.mkdir(parents=True, exist_ok=True)
 
-    model = LiNet(learning_rate=learning_rate, momentum=momentum, dropout_rate=dropout_rate)
+    model = LiNet(learning_rate=learning_rate, momentum=momentum, batch_size=batch_size, dropout_rate=dropout_rate)
     trainer = Trainer(max_epochs=epochs,
                       gpus=gpus,
                       logger=WandbLogger(project="dope image classifier", entity="bloodclot-inc"),
-                      log_every_n_steps=1)
+                      log_every_n_steps=1,
+                      auto_scale_batch_size=autoscale_batch_size)
+    print(f"BATCH SIZE: {model.hparams.batch_size}")
     cifar10 = CIFAR10DataModule(data_dir=image_folder, batch_size=batch_size, split_ratio=split_ratio, num_workers=num_workers)
+    trainer.tune(model, cifar10)
+    print(f"BATCH SIZE: {model.hparams.batch_size}")
     # cifar10.setup(stage='fit')
     trainer.fit(model, cifar10)
 
