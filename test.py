@@ -1,20 +1,23 @@
 from pathlib import Path
-from typing import Tuple, Iterable
+from typing import Tuple, Iterable, Optional
 
 import cv2
 import numpy as np
 import onnx
 import onnxruntime as rt
-import typer
+import argparse
 from PIL import Image
 from matplotlib import pyplot as plt
 
 
 # TODO: Add batch inference
 
-def test(model_checkpoint: Path = typer.Option(...), image_path: Path = typer.Option(...), height: int = 32,
+def test(model_checkpoint: Path,
+         image_path: Path,
+         height: int = 32,
          width: int = 32):
-    model = onnx.load(model_checkpoint)
+
+    model = onnx.load(model_checkpoint.as_posix())
     session = rt.InferenceSession(model.SerializeToString(), None)
 
     classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
@@ -57,4 +60,12 @@ def predict(session: rt.InferenceSession, image_path: Path, size: Tuple[int, int
 
 
 if __name__ == '__main__':
-    typer.run(test)
+
+    parser = argparse.ArgumentParser(description='This app showcases a dope CIFAR10 classifier')
+
+    parser.add_argument('--model-checkpoint', type=Path)
+    parser.add_argument('--image-path', type=Path)
+    parser.add_argument('--height', type=Optional[int], default=32)
+    parser.add_argument('--width', type=Optional[int], default=32)
+    args = parser.parse_args()
+    test(**dict(args._get_kwargs()))
