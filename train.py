@@ -9,6 +9,7 @@ from typing import Optional
 import torch
 from loguru import logger
 from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import StochasticWeightAveraging, ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
 
@@ -54,11 +55,20 @@ def main(
     save_to_folder.mkdir(parents=True, exist_ok=True)
 
     model = LiNet(learning_rate=learning_rate, momentum=momentum, batch_size=batch_size, dropout_rate=dropout_rate)
+    # Enable Stochastic Weight Averaging using the callback
+    # swa = StochasticWeightAveraging(swa_epoch_start=0.75)
+    model_checkpoint = ModelCheckpoint(
+        monitor='valid/loss',
+        save_top_k=1,
+        mode='min'
+    )
+    callbacks=[model_checkpoint]
     trainer = Trainer(max_epochs=epochs,
                       gpus=gpus,
                       logger=WandbLogger(project="dope image classifier", entity="bloodclot-inc"),
                       log_every_n_steps=1,
-                      auto_scale_batch_size=autoscale_batch_size)
+                      auto_scale_batch_size=autoscale_batch_size,
+                      callbacks=callbacks)
 
     cifar10 = CIFAR10DataModule(data_dir=image_folder.as_posix(),
                                 batch_size=batch_size,
@@ -67,6 +77,8 @@ def main(
     trainer.tune(model, cifar10)
     trainer.fit(model, cifar10)
     trainer.test(model, cifar10)
+
+
     
     # add a batch dimension for onnx conversion -> (num samples, channels, H, W)
     input_sample = torch.randn(cifar10.dims).unsqueeze(0)
@@ -85,9 +97,9 @@ if __name__ == "__main__":
     parser.add_argument('--learning-rate', type=float, default=0.001)
     parser.add_argument('--momentum', type=float, default=0.9)
     parser.add_argument('--batch-size', type=int, default=2)
-    parser.add_argument('--autoscale_batch_size', type=Optional[AutoscalingTechnique], default=None)
+    parser.add_argument('--autoscale-batch-size', type=Optional[AutoscalingTechnique], default=None)
     parser.add_argument('--split_ratio', type=float, default=0.9)
-    parser.add_argument('--dropout_rate', type=float, default=0.2)
-    parser.add_argument('--num_workers', type=int, default=0)
+    parser.add_argument('--dropout-rate', type=float, default=0.2)
+    parser.add_argument('--num-workers', type=int, default=0)
     args = parser.parse_args()
     main(**dict(args._get_kwargs()))
