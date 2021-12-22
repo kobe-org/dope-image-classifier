@@ -13,7 +13,7 @@ from torchmetrics import Accuracy, MetricCollection, Precision, Recall, F1
 
 
 class LiNet(pl.LightningModule):
-    def __init__(self, learning_rate: float, momentum: float, dropout_rate: float):
+    def __init__(self, learning_rate: float, momentum: float, batch_size: int, dropout_rate: float):
         super().__init__()
         # This saves all constructor arguments as items in the hparams dictionary
         self.save_hyperparameters()
