@@ -1,6 +1,6 @@
 pip
 numpy
-pytorch
+torch
 torchvision
 torchmetrics
 jupyterlab
@@ -10,7 +10,7 @@ loguru
 onnxruntime
 onnx
 pytorch-lightning
-opencv
+opencv-python
 wandb
 scikit-image
 streamlit
