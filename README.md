@@ -1,2 +1,5 @@
 # dope-image-classifier
-a simple classifier served in a dope way
+
+We train a simple image classifier with PyTorch Lightning and serve it with ONNX and RedisAI.
+
+
